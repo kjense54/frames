@@ -13,10 +13,10 @@ void processInput(GLFWwindow* window) {
 const char* vShaderSource = R"(
   #version 330 
   const vec2 vertices[4] = vec2[4](
-    vec2(-1.0, 1.0),
-    vec2(1.0, 1.0),
-    vec2(1.0, -1.0),
-    vec2(-1.0, -1.0)
+    vec2(-1.0, -1.0), 	// bottom left
+    vec2(1.0, -1.0),	// bottom right
+    vec2(1.0, 1.0),		// top right
+    vec2(-1.0, 1.0) // top left
   );
   out vec2 position;
   void main() {
@@ -35,9 +35,8 @@ const char* fShaderSource = R"(
   uniform sampler2D vTexture;
   
   void main() {
-    vec2 flipped = position - 0.5f ;
-		flipped.x += 1.0f;
-    flipped.y *= -1.0f;
+    vec2 flipped = (position + 1.0) / 2.0;
+		flipped.y = 1.0 - flipped.y;
 
     float y = texture(yTexture, flipped).r;
 		float u = texture(uTexture, flipped).r - 0.5;
@@ -106,29 +105,38 @@ GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
  // render loop
   glClearColor(0.0f, 0.4f, 0.4f, 1.0f);
-  Image image = decoder.next();
-	int frames = 8;
-	for (int i = 0; i < frames; i++) {
-  	image = decoder.next();
-	}
-	
-  Texture texture = imgToTexture(image);
-  // bind textures
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture.yTex);
-  glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
-
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, texture.uTex);
-  glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
-
-  glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, texture.vTex);
-  glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
 
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
     glClear(GL_COLOR_BUFFER_BIT);
+
+		/*TODO: playspeed function: play at default speed or specified fps*/
+		Image image = decoder.next();
+		Texture texture = imgToTexture(image);
+		// bind textures
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture.yTex);
+		glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture.uTex);
+		glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, texture.vTex);
+		glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
+			// bind textures
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture.yTex);
+		glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture.uTex);
+		glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, texture.vTex);
+		glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glfwSwapBuffers(window);
