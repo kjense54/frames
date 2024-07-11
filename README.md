@@ -6,3 +6,8 @@ or
  - show every x frame and hold for y seconds
  - timeline scrubbing
  - play/pause
+
+### TODO
+- [ ] set fps for playback 
+- [ ] find gui framework  
+- [ ]  

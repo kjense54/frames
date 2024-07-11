@@ -16,6 +16,14 @@ private:
   AVCodecContext* codec_ctx;
   AVFrame* frame;
   AVPacket* packet;
+	AVPacket* prev_packet;
+
+	size_t height;
+	size_t width;
+	size_t stride;
+	std::vector<uint8_t>yData;
+	std::vector<uint8_t>uData;
+	std::vector<uint8_t>vData;
 
   static AVFormatContext* makeFormatCtx(const char* input_file);
   static AVCodecContext* makeCodecCtx(AVFormatContext* format_ctx);
@@ -26,5 +34,6 @@ public:
   FrameDecoder(const char* img_file); 
   ~FrameDecoder();
   Image next();
+	bool reachedEOS();
 };
 #endif

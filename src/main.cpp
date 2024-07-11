@@ -102,6 +102,7 @@ GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   //Video Decoding
   const char* input_file = "resources/one_piece_test.mp4";
   FrameDecoder decoder(input_file);
+	bool eoframes = false;
 
  // render loop
   glClearColor(0.0f, 0.4f, 0.4f, 1.0f);
@@ -110,33 +111,36 @@ GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     processInput(window);
     glClear(GL_COLOR_BUFFER_BIT);
 
-		/*TODO: playspeed function: play at default speed or specified fps*/
-		Image image = decoder.next();
-		Texture texture = imgToTexture(image);
-		// bind textures
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture.yTex);
-		glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
-
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture.uTex);
-		glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
-
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, texture.vTex);
-		glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
+		if (!eoframes) {
+			Image image = decoder.next();
+			Texture texture = imgToTexture(image);
 			// bind textures
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture.yTex);
-		glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture.yTex);
+			glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
 
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture.uTex);
-		glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, texture.uTex);
+			glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
 
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, texture.vTex);
-		glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, texture.vTex);
+			glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
+				// bind textures
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture.yTex);
+			glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, texture.uTex);
+			glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
+
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, texture.vTex);
+			glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
+
+			eoframes = image.eof;
+		}
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glfwSwapBuffers(window);

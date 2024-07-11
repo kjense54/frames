@@ -93,7 +93,8 @@ FrameDecoder::~FrameDecoder() {
 // read frames
 Image FrameDecoder::next() {
   if (av_read_frame(format_ctx, packet) < 0) {
-    throw std::runtime_error("Failed to read frame");
+		std::cerr << "failed to read packet, return prev info." << std::endl;
+  	return { width, height, stride, yData, uData , vData, true};
   }
 
   if (avcodec_send_packet(codec_ctx, packet) < 0) {
@@ -112,13 +113,14 @@ Image FrameDecoder::next() {
     << " bytes, format " << av_get_pix_fmt_name(codec_ctx->pix_fmt)
     << ")" << std::endl;
 
-  size_t width = frame->width;
-  size_t height = frame->height;
-  size_t stride = frame->linesize[0];
-	std::vector<uint8_t>yData(frame->data[0], frame->data[0] + stride * height);
-	std::vector<uint8_t>uData(frame->data[1] , frame->data[1] + yData.size() / 4); 
-	std::vector<uint8_t>vData(frame->data[2] , frame->data[2] + uData.size()); 
+  width = frame->width;
+  height = frame->height;
+  stride = frame->linesize[0];
+	yData.assign(frame->data[0], frame->data[0] + stride * height);
+	uData.assign(frame->data[1] , frame->data[1] + yData.size() / 4); 
+	vData.assign(frame->data[2] , frame->data[2] + uData.size()); 
 
 	std::cout << "data: " << frame->side_data << " y: " << yData.size() << " u: " << uData.size()  << " v: " << vData.size() << std::endl;
-  return { width, height, stride, yData, uData , vData};
+  return { width, height, stride, yData, uData , vData, false};
 }
+

@@ -11,5 +11,6 @@ struct Image {
   std::vector<uint8_t> yData;
 	std::vector<uint8_t> uData;
 	std::vector<uint8_t> vData;
+	bool eof;
 };
 #endif
