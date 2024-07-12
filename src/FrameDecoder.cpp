@@ -93,7 +93,7 @@ FrameDecoder::~FrameDecoder() {
 // read frames
 Frame FrameDecoder::next() {
   if (av_read_frame(format_ctx, packet) < 0) {
-		std::cerr << "failed to read packet, return prev info." << std::endl;
+		std::cerr << "EOF reached" << std::endl;
   	return { width, height, stride, yData, uData , vData, true};
   }
 
@@ -107,11 +107,14 @@ Frame FrameDecoder::next() {
   }
 
   // print basic frame properties
+	bool print = false;
+	if (print) {
   std::cout << "Frame " << codec_ctx->frame_number
     << " (type " << av_get_picture_type_char(frame->pict_type)
     << ", size " << packet->size
     << " bytes, format " << av_get_pix_fmt_name(codec_ctx->pix_fmt)
     << ")" << std::endl;
+	}
 
   width = frame->width;
   height = frame->height;
@@ -120,7 +123,6 @@ Frame FrameDecoder::next() {
 	uData.assign(frame->data[1] , frame->data[1] + yData.size() / 4); 
 	vData.assign(frame->data[2] , frame->data[2] + uData.size()); 
 
-	std::cout << "data: " << frame->side_data << " y: " << yData.size() << " u: " << uData.size()  << " v: " << vData.size() << std::endl;
   return { width, height, stride, yData, uData , vData, false};
 }
 
