@@ -1,6 +1,6 @@
 #ifndef FRAMEDECODER_H
 #define FRAMEDECODER_H
-#include "Image.h"
+#include "Frame.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -33,7 +33,7 @@ private:
 public:
   FrameDecoder(const char* img_file); 
   ~FrameDecoder();
-  Image next();
+  Frame next();
 	bool reachedEOS();
 };
 #endif

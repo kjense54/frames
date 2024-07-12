@@ -91,7 +91,7 @@ FrameDecoder::~FrameDecoder() {
 }
 
 // read frames
-Image FrameDecoder::next() {
+Frame FrameDecoder::next() {
   if (av_read_frame(format_ctx, packet) < 0) {
 		std::cerr << "failed to read packet, return prev info." << std::endl;
   	return { width, height, stride, yData, uData , vData, true};

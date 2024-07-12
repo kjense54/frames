@@ -2,54 +2,14 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "FrameDecoder.h"
-#include "Texture.h"
+#include "Shader.h"
 
 void processInput(GLFWwindow* window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
 }
-
-// shaders
-const char* vShaderSource = R"(
-  #version 330 
-  const vec2 vertices[4] = vec2[4](
-    vec2(-1.0, -1.0), 	// bottom left
-    vec2(1.0, -1.0),	// bottom right
-    vec2(1.0, 1.0),		// top right
-    vec2(-1.0, 1.0) // top left
-  );
-  out vec2 position;
-  void main() {
-    position = vertices[gl_VertexID];
-    gl_Position = vec4(position , 0.0, 1.0);
-  }
-)";
-
-const char* fShaderSource = R"(
-  #version 330 
-  in vec2 position;
-  out vec4 FragColor;
-
-  uniform sampler2D yTexture;
-  uniform sampler2D uTexture;
-  uniform sampler2D vTexture;
   
-  void main() {
-    vec2 flipped = (position + 1.0) / 2.0;
-		flipped.y = 1.0 - flipped.y;
 
-    float y = texture(yTexture, flipped).r;
-		float u = texture(uTexture, flipped).r - 0.5;
-    float v = texture(vTexture, flipped).r - 0.5;
-
-    float r = y + 1.13983f * v;
-    float g = y - 0.39465f * u - 0.58060f * v;
-    float b = y + 2.03211f * u;
-
-    FragColor = vec4(r, g, b, 1.0);
-  }
-)";
-  
 int main() {
   if (!glfwInit()) {
     std::cerr << "Failed to init GLFW" << std::endl;
@@ -79,25 +39,10 @@ int main() {
   // set rendering viewport
   glViewport(0, 0, 1920, 1080);
 
-
   // compile shaders
-GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vShaderSource, NULL);
-    glCompileShader(vertexShader);
 
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // set up shader program
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-    glUseProgram(program);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+	// set up shader program
+	GLuint program = Shader::init();
 
   //Video Decoding
   const char* input_file = "resources/one_piece_test.mp4";
@@ -105,41 +50,16 @@ GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	bool eoframes = false;
 
  // render loop
-  glClearColor(0.0f, 0.4f, 0.4f, 1.0f);
-
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
     glClear(GL_COLOR_BUFFER_BIT);
 
 		if (!eoframes) {
-			Image image = decoder.next();
-			Texture texture = imgToTexture(image);
-			// bind textures
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, texture.yTex);
-			glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
+			Frame frame = decoder.next();
+			Shader::Texture texture = Shader::imgToTexture(frame);
+			Shader::updateTexture(program, texture);
 
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, texture.uTex);
-			glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
-
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, texture.vTex);
-			glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
-				// bind textures
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, texture.yTex);
-			glUniform1i(glGetUniformLocation(program, "yTexture"), 0);
-
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, texture.uTex);
-			glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
-
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, texture.vTex);
-			glUniform1i(glGetUniformLocation(program, "vTexture"), 2);
-
-			eoframes = image.eof;
+			eoframes = frame.eof;
 		}
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

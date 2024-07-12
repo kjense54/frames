@@ -1,10 +1,10 @@
-#ifndef IMAGE_H
-#define IMAGE_H
+#ifndef FRAME_H
+#define FRAME_H
 
 #include <iostream>
 #include <vector>
 
-struct Image {
+struct Frame {
   size_t width;
   size_t height;
   size_t stride;
