@@ -34,6 +34,5 @@ public:
   FrameDecoder(const char* img_file); 
   ~FrameDecoder();
   Frame next();
-	bool reachedEOS();
 };
 #endif

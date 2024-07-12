@@ -94,7 +94,7 @@ FrameDecoder::~FrameDecoder() {
 Frame FrameDecoder::next() {
   if (av_read_frame(format_ctx, packet) < 0) {
 		std::cerr << "EOF reached" << std::endl;
-  	return { width, height, stride, yData, uData , vData, true};
+  	return { width, height, yData, uData , vData, true};
   }
 
   if (avcodec_send_packet(codec_ctx, packet) < 0) {
@@ -119,10 +119,18 @@ Frame FrameDecoder::next() {
   width = frame->width;
   height = frame->height;
   stride = frame->linesize[0];
-	yData.assign(frame->data[0], frame->data[0] + stride * height);
-	uData.assign(frame->data[1] , frame->data[1] + yData.size() / 4); 
-	vData.assign(frame->data[2] , frame->data[2] + uData.size()); 
+	// remove extra buffer padding (difference btwn stride and width)
+	yData.clear();
+	for (int i = 0; i < height; i++) {
+		yData.insert(yData.end(), frame->data[0] + (i * stride), frame->data[0] + (i * stride) + width + 2);
+	}
+	uData.clear();
+	vData.clear();
+	for (int i = 0; i < height / 2; i++) {
+		uData.insert(uData.end(), frame->data[1] + (i * stride / 2), frame->data[1] + (i * stride / 2) + width / 2 + 1);
+		vData.insert(vData.end(), frame->data[2] + (i * stride / 2), frame->data[2] + (i * stride / 2) + width / 2 + 1);
+	}
 
-  return { width, height, stride, yData, uData , vData, false};
+  return { width, height, yData, uData , vData, false};
 }
 

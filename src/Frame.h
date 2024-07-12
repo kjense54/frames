@@ -7,7 +7,6 @@
 struct Frame {
   size_t width;
   size_t height;
-  size_t stride;
   std::vector<uint8_t> yData;
 	std::vector<uint8_t> uData;
 	std::vector<uint8_t> vData;

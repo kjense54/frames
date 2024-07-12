@@ -33,7 +33,7 @@ Shader::Texture Shader::imgToTexture(const Frame &frame) {
 
   // Y plane
   glBindTexture(GL_TEXTURE_2D, yTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.stride, frame.height, 0, GL_RED, GL_UNSIGNED_BYTE, frame.yData.data());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width, frame.height, 0, GL_RED, GL_UNSIGNED_BYTE, frame.yData.data());
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,  GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -41,7 +41,7 @@ Shader::Texture Shader::imgToTexture(const Frame &frame) {
 
   // U plane
   glBindTexture(GL_TEXTURE_2D, uTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.stride / 2, frame.height / 2, 0, GL_RED, GL_UNSIGNED_BYTE, frame.uData.data());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width / 2, frame.height / 2, 0, GL_RED, GL_UNSIGNED_BYTE, frame.uData.data());
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -49,7 +49,7 @@ Shader::Texture Shader::imgToTexture(const Frame &frame) {
 
   // V plane
   glBindTexture(GL_TEXTURE_2D, vTexture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.stride / 2, frame.height / 2, 0, GL_RED, GL_UNSIGNED_BYTE, frame.vData.data());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, frame.width / 2, frame.height / 2, 0, GL_RED, GL_UNSIGNED_BYTE, frame.vData.data());
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

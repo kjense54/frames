@@ -5,13 +5,13 @@
 #include "FrameDecoder.h"
 #include "Shader.h"
 
-bool paused = false;
-bool adjust_iter = false;
-bool adjust_hold = false;
-const int MAX_FRAME_ITER = 30;
-int frame_iter = 1;
-int frame_hold = 30;
+const int MAX_FRAME_SKIP = 30;
 const int FRAME_HOLD_INCREMENT = 5;
+bool paused = false;
+bool adjust_skip = false;
+bool adjust_hold = false;
+int frame_skip = 5;
+int frame_hold = 30;
 
 
 void processInput(GLFWwindow* window) {
@@ -24,24 +24,24 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		if (key == GLFW_KEY_SPACE) {
 			paused = !paused;
 			adjust_hold = false;
-			adjust_iter = false;
+			adjust_skip = false;
 			std::cout << (paused ? "paused" : "playing") << std::endl;
 		}
 		if (paused) {
 			switch (key) {
 			case GLFW_KEY_I:
 				adjust_hold = false;
-				adjust_iter = true;
+				adjust_skip = true;
 				break;
 			case GLFW_KEY_H:
 				adjust_hold = true;
-				adjust_iter = false;
+				adjust_skip = false;
 				break;
 			case GLFW_KEY_UP:
-				if (adjust_iter) {
-					if (frame_iter < MAX_FRAME_ITER) 
-						frame_iter++;
-				std::cout << "frame skip: " <<  frame_iter << std::endl;
+				if (adjust_skip) {
+					if (frame_skip < MAX_FRAME_SKIP) 
+						frame_skip++;
+				std::cout << "frame skip: " <<  frame_skip << std::endl;
 				}
 				if (adjust_hold) {
 					frame_hold += FRAME_HOLD_INCREMENT;
@@ -49,10 +49,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 				}
 				break;
 			case GLFW_KEY_DOWN:
-				if (adjust_iter) {
-					if (frame_iter > 1)
-						frame_iter--;
-					std::cout << "frame skip: " << frame_iter << std::endl;
+				if (adjust_skip) {
+					if (frame_skip > 1)
+						frame_skip--;
+					std::cout << "frame skip: " << frame_skip << std::endl;
 				}
 				if (adjust_hold) {
 					if (frame_hold > FRAME_HOLD_INCREMENT)
@@ -105,19 +105,18 @@ int main() {
 	bool eoframes = false;
 
 	// timer for frame hold
-	auto start_time = std::chrono::steady_clock::now();	
+	auto start_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double> duration_time = std::chrono::duration<double>(frame_hold + 1.0);
 
  // render loop
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
     glClear(GL_COLOR_BUFFER_BIT);
 
-		auto end_time = std::chrono::steady_clock::now();
-		std::chrono::duration<double> duration_time = end_time - start_time;
 
 		if (!eoframes && !paused && duration_time >= std::chrono::seconds(frame_hold)) {
 			Frame frame = decoder.next();
-			for (int i = 1; i < frame_iter; i++) {
+			for (int i = 1; i < frame_skip; i++) {
 				frame = decoder.next();
 			}
 			Shader::Texture texture = Shader::imgToTexture(frame);
@@ -127,7 +126,11 @@ int main() {
 			start_time = std::chrono::steady_clock::now();
 		}
 
+		auto end_time = std::chrono::steady_clock::now();
+		duration_time = end_time - start_time;
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
