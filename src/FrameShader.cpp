@@ -1,30 +1,32 @@
-#include "Shader.h"
+#include "FrameShader.h"
 
-GLuint Shader::compileShader(GLenum type, const char* source) {
+GLuint FrameShader::compileShader(GLenum type, const char* source) {
 	GLuint shader = glCreateShader(type);
 	glShaderSource(shader, 1, &source, NULL);
 	glCompileShader(shader);
 	return shader;
 }
-GLuint Shader::compileProgram(GLuint vShader, GLuint fShader) {
+
+GLuint FrameShader::compileProgram(GLuint vShader, GLuint fShader) {
 	GLuint program = glCreateProgram();
 	glAttachShader(program, vShader);
 	glAttachShader(program, fShader);
 	glLinkProgram(program);
-	glUseProgram(program);
 
 	glDeleteShader(vShader);
 	glDeleteShader(fShader);
 
 	return program;
 }
-GLuint Shader::init() {
-	GLuint vertexShader = Shader::compileShader(GL_VERTEX_SHADER, Shader::vShaderSource);
-	GLuint fragmentShader = Shader::compileShader(GL_FRAGMENT_SHADER, Shader::fShaderSource);
-	GLuint program = Shader::compileProgram(vertexShader, fragmentShader); 
+
+GLuint FrameShader::init() {
+	GLuint vertexShader = FrameShader::compileShader(GL_VERTEX_SHADER, FrameShader::vShaderSource);
+	GLuint fragmentShader = FrameShader::compileShader(GL_FRAGMENT_SHADER, FrameShader::fShaderSource);
+	GLuint program = FrameShader::compileProgram(vertexShader, fragmentShader); 
 	return program;
 }
-Shader::Texture Shader::imgToTexture(const Frame &frame) {
+
+FrameShader::Texture FrameShader::imgToTexture(const Frame &frame) {
   // create texture for each plane
   GLuint yTexture, uTexture, vTexture;
   glGenTextures(1, &yTexture);
@@ -58,7 +60,7 @@ Shader::Texture Shader::imgToTexture(const Frame &frame) {
   return { yTexture, uTexture, vTexture };
 }
 
-void Shader::updateTexture(GLuint program, Shader::Texture &texture) {
+void FrameShader::updateTexture(GLuint program, FrameShader::Texture &texture) {
 	// bind textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture.yTex);

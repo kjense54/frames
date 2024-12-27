@@ -3,7 +3,8 @@
 #include <iostream>
 #include <chrono>
 #include "FrameDecoder.h"
-#include "Shader.h"
+#include "FrameShader.h"
+#include "UIShader.h"
 
 const int MAX_FRAME_SKIP = 30;
 const int FRAME_HOLD_INCREMENT = 5;
@@ -12,6 +13,7 @@ bool adjust_skip = false;
 bool adjust_hold = false;
 int frame_skip = 5;
 int frame_hold = 30;
+
 
 
 void processInput(GLFWwindow* window) {
@@ -65,6 +67,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
   
+const int INITIAL_WIDTH = 1920;
+const int INITIAL_HEIGHT = 1080;
 
 int main() {
   if (!glfwInit()) {
@@ -77,7 +81,7 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
 
   // create window and context
-  GLFWwindow* window = glfwCreateWindow(1920, 1080, "Frame by Frame", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "Frame by Frame", NULL, NULL);
   if (!window) {
     std::cerr << "Failed to create window" << std::endl;
     glfwTerminate();
@@ -86,7 +90,6 @@ int main() {
 
   glfwSetWindowPos(window, 100, 2000);
   glfwMakeContextCurrent(window);
-	// set callback for keypresses
 	glfwSetKeyCallback(window, key_callback);
 
   // init GLAD
@@ -94,42 +97,62 @@ int main() {
     std::cerr << "Failed to initialize glad" << std::endl;
   }
   // set rendering viewport
-  glViewport(0, 0, 1920, 1080);
+  glViewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
 
-	// set up shader program
-	GLuint program = Shader::init();
+	// frame and ui programs
+	GLuint frameProgram = FrameShader::init();
+	GLuint uiProgram = UIShader::init();
 
-  //Video Decoding
+  // Video Decoding
   const char* input_file = "resources/one_piece_test.mp4";
   FrameDecoder decoder(input_file);
 	bool eoframes = false;
+
+	// TODO: delete when gui done
+	std::cout << "Press Spacebar to play/pause. Settings can be changed while paused." << std::endl;
+	std::cout << "I: Enter frame skip adjustment mode. Up and Down arrows will increment by 1. Max skip is 30 frames." << std::endl;
+	std::cout << "H: Enter frame hold adjustment mode. Up and Down arrows will increment by 5." << std::endl;
 
 	// timer for frame hold
 	auto start_time = std::chrono::steady_clock::now();
 	std::chrono::duration<double> duration_time = std::chrono::duration<double>(frame_hold + 1.0);
 
- // render loop
+ // RENDER -----------------------------------------------------------------------------------------------------------------------------
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
     glClear(GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
 
-
+		//TODO: change time to subtract timewhilePaused to not count it. 
+		// FRAME 
+		glUseProgram(frameProgram);
+		GLenum err;
+		if ((err = glGetError()) != GL_NO_ERROR) {
+			std::cout << "OpenGl glUseProgram(frameProgram) error: " << err << std::endl;
+		}
 		if (!eoframes && !paused && duration_time >= std::chrono::seconds(frame_hold)) {
 			Frame frame = decoder.next();
 			for (int i = 1; i < frame_skip; i++) {
 				frame = decoder.next();
 			}
-			Shader::Texture texture = Shader::imgToTexture(frame);
-			Shader::updateTexture(program, texture);
-
+			FrameShader::Texture texture = FrameShader::imgToTexture(frame);
+			FrameShader::updateTexture(frameProgram, texture);
 			eoframes = frame.eof;
 			start_time = std::chrono::steady_clock::now();
 		}
-
 		auto end_time = std::chrono::steady_clock::now();
 		duration_time = end_time - start_time;
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+		// UI 
+		glUseProgram(uiProgram);
+		if ((err = glGetError()) != GL_NO_ERROR) {
+			std::cout << "OpenGl glUseProgram(uiProgram) error: " << err << std::endl;
+		}
+		UIShader::toggleUIButtonVisibility("play", paused);
+		UIShader::toggleUIButtonVisibility("pause", !paused);
+		UIShader::drawUIButtons();
 
     glfwSwapBuffers(window);
     glfwPollEvents();

@@ -1,17 +1,17 @@
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef FRAMESHADER_H
+#define FRAMESHADER_H
 
 #include "../include/glad/glad.h"
 #include <GLFW/glfw3.h>
 #include "Frame.h"
 
-namespace Shader {
+namespace FrameShader {
 // shaders
 	static const char* vShaderSource = R"(
 		#version 330 
 		const vec2 vertices[4] = vec2[4](
-			vec2(-1.0, -1.0), 	// bottom left
-			vec2(1.0, -1.0),	// bottom right
+			vec2(-1.0, -0.9), 	// bottom left
+			vec2(1.0, -0.9),	// bottom right
 			vec2(1.0, 1.0),		// top right
 			vec2(-1.0, 1.0) // top left
 		);
