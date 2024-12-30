@@ -1,2 +1,2 @@
-src/*.c linguist-vendored
-src/vendor/ linguist-vendored
+src/vendor/* linguist-vendored
+include/**/* linguist-vendored
