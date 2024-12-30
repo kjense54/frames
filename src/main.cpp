@@ -8,14 +8,16 @@
 
 const int MAX_FRAME_SKIP = 30;
 const int FRAME_HOLD_INCREMENT = 5;
-bool paused = false;
+struct {
+	bool paused = false;
+	bool justChanged = false;
+} videoState;
 bool adjust_skip = false;
 bool adjust_hold = false;
 int frame_skip = 5;
 int frame_hold = 30;
 
-
-
+//--------------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
@@ -24,12 +26,13 @@ void processInput(GLFWwindow* window) {
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (action == GLFW_PRESS) {
 		if (key == GLFW_KEY_SPACE) {
-			paused = !paused;
+			videoState.paused = !videoState.paused;
+			videoState.justChanged = true;
 			adjust_hold = false;
 			adjust_skip = false;
-			std::cout << (paused ? "paused" : "playing") << std::endl;
+			std::cout << (videoState.paused ? "paused" : "playing") << std::endl;
 		}
-		if (paused) {
+		if (videoState.paused) {
 			switch (key) {
 			case GLFW_KEY_I:
 				adjust_hold = false;
@@ -70,6 +73,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 const int INITIAL_WIDTH = 1920;
 const int INITIAL_HEIGHT = 1080;
 
+//----------------------------------------------------------------------------------------------------------
 int main() {
   if (!glfwInit()) {
     std::cerr << "Failed to init GLFW" << std::endl;
@@ -109,39 +113,59 @@ int main() {
 	bool eoframes = false;
 
 	// TODO: delete when gui done
-	std::cout << "Press Spacebar to play/pause. Settings can be changed while paused." << std::endl;
 	std::cout << "I: Enter frame skip adjustment mode. Up and Down arrows will increment by 1. Max skip is 30 frames." << std::endl;
 	std::cout << "H: Enter frame hold adjustment mode. Up and Down arrows will increment by 5." << std::endl;
 
 	// timer for frame hold
-	auto start_time = std::chrono::steady_clock::now();
+	std::chrono::steady_clock::time_point start_time;
+	std::chrono::steady_clock::time_point start_pause_time;
 	std::chrono::duration<double> duration_time = std::chrono::duration<double>(frame_hold + 1.0);
+	std::chrono::duration<double> pause_duration; 
 
- // RENDER -----------------------------------------------------------------------------------------------------------------------------
+ //-------------------------------------------------------------------------------------------------------------------------------
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
     glClear(GL_COLOR_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 
-		//TODO: change time to subtract timewhilePaused to not count it. 
 		// FRAME 
 		glUseProgram(frameProgram);
 		GLenum err;
 		if ((err = glGetError()) != GL_NO_ERROR) {
 			std::cout << "OpenGl glUseProgram(frameProgram) error: " << err << std::endl;
 		}
-		if (!eoframes && !paused && duration_time >= std::chrono::seconds(frame_hold)) {
-			Frame frame = decoder.next();
-			for (int i = 1; i < frame_skip; i++) {
-				frame = decoder.next();
+
+		if (videoState.paused) {
+			if (videoState.justChanged) {														// just pressed pause
+				videoState.justChanged = false;
+				start_pause_time = std::chrono::steady_clock::now();
 			}
-			FrameShader::Texture texture = FrameShader::imgToTexture(frame);
-			FrameShader::updateTexture(frameProgram, texture);
-			eoframes = frame.eof;
-			start_time = std::chrono::steady_clock::now();
+
+		} else {
+			if (videoState.justChanged) {														// just pressed play
+				std::cout << "just changed to play" << std::endl;
+				auto end_pause_time = std::chrono::steady_clock::now();
+				videoState.justChanged = false;
+				pause_duration += end_pause_time - start_pause_time;
+			}
+			
+			duration_time = std::chrono::steady_clock::now() - start_time - pause_duration;
+
+			if (!eoframes && duration_time >= std::chrono::seconds(frame_hold)) { // if it is time to change the frame (x seconds have passed)
+				start_time = std::chrono::steady_clock::now();
+				pause_duration = std::chrono::duration<double>::zero();
+
+				Frame frame = decoder.next();
+				for (int i = 1; i < frame_skip; i++) {
+					frame = decoder.next();
+				}
+				FrameShader::Texture texture = FrameShader::imgToTexture(frame);
+				FrameShader::updateTexture(frameProgram, texture);
+				eoframes = frame.eof;
+			}																																									// all other stuff that happens when playing but not changing frame 
+
 		}
-		auto end_time = std::chrono::steady_clock::now();
-		duration_time = end_time - start_time;
+		// TODO: fix pause duration with a justPaused variable (or do it in the key callback or separate function it can be called in mult places)
 
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
@@ -150,8 +174,8 @@ int main() {
 		if ((err = glGetError()) != GL_NO_ERROR) {
 			std::cout << "OpenGl glUseProgram(uiProgram) error: " << err << std::endl;
 		}
-		UIShader::toggleUIButtonVisibility("play", paused);
-		UIShader::toggleUIButtonVisibility("pause", !paused);
+		UIShader::toggleUIButtonVisibility("play", videoState.paused);
+		UIShader::toggleUIButtonVisibility("pause", !videoState.paused);
 		UIShader::drawUIButtons();
 
     glfwSwapBuffers(window);
