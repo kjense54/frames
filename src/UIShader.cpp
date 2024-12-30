@@ -39,31 +39,68 @@ GLuint UIShader::compileProgram(GLuint vShader, GLuint fShader) {
 	return program;
 }
 
-std::map<std::string, UIShader::UIButton> uiButtons; // store by name
+std::map<UIShader::UIButton::NAME, UIShader::UIButton> uiButtons; // store by name
 
 void UIShader::createUIButtons() {
+		// pos									// color
 	std::vector<float> playButtonVertices = {
-		-0.034f, -0.9f,					1.0f, 1.0f, 1.0f,
+		-0.034f, -0.91f,					1.0f, 1.0f, 1.0f,
 		 0.02f, -0.95f,					1.0f, 1.0f, 1.0f,
-		-0.034f, -1.0f,					1.0f, 1.0f, 1.0f,
+		-0.034f, -0.99f,					1.0f, 1.0f, 1.0f,
 	};
 	std::vector<float> pauseButtonVertices = {
-		-0.035f, -0.91f, 					1.0f, 1.0f, 1.0f,
-		0.015f, -0.91f, 					1.0f, 1.0f, 1.0f,
+		-0.035f, -0.91f, 				1.0f, 1.0f, 1.0f,
+		0.015f, -0.91f, 				1.0f, 1.0f, 1.0f,
 		0.015f, -0.99f,					1.0f, 1.0f, 1.0f,
-		-0.035f, -0.99f,					1.0f, 1.0f, 1.0f,	
+		-0.035f, -0.99f,				1.0f, 1.0f, 1.0f,	
+	};
+	std::vector<float> fileButtonVertices = {
+		0.8f, -0.91f,						0.5f, 0.5f, 0.5f,			// top left
+		0.99f, -0.91f, 					0.5f, 0.5f, 0.5f,			// top right
+		0.99f, -0.99f,					0.5f, 0.5f, 0.5f,			// bottom right
+		0.8f, -0.99f, 					0.5f, 0.5f, 0.5f,			// bottom left
 	};
 
 	// play button
 	UIShader::UIButton playButton;
 	playButton.vertices = playButtonVertices;
 	playButton.vertexCount = 3;
-	uiButtons["play"] = playButton;
+	uiButtons[UIButton::PLAY] = playButton;
 
 	UIShader::UIButton pauseButton;
 	pauseButton.vertices = pauseButtonVertices;
 	pauseButton.vertexCount = 4;
-	uiButtons["pause"] = pauseButton;
+	uiButtons[UIButton::PAUSE] = pauseButton;
+
+	UIShader::UIButton fileButton;
+	fileButton.vertices = fileButtonVertices;
+	fileButton.vertexCount = 4;
+	// use 0,2 coord space
+	fileButton.x = 1.0 + fileButtonVertices[0];
+	fileButton.y = 1.0 - fileButtonVertices[1];
+	fileButton.x2 = 1.0 + fileButtonVertices[5];
+	fileButton.y2 = 1.0 - fileButtonVertices[11];
+	std::cout << fileButton.x << ", " << fileButton.y << ", " << fileButton.x2 << ", " << fileButton.y2 << std::endl;
+	uiButtons[UIButton::FILE] = fileButton;
+}
+
+int UIShader::checkMouseOver(double xpos, double ypos, int width, int height) {
+	// convert xpos ypos to 0,2 coord space
+	float x = float(xpos) * 2 / float(width);
+	float y = float(ypos) * 2 / float(height);
+	
+	for(auto& buttonMap : uiButtons) {
+		UIButton& button = buttonMap.second;
+
+		if (button.x != 0) {
+			if (x >= button.x && x <= button.x2) {
+				if (y >= button.y && y <= button.y2) {
+					return buttonMap.first;
+				}
+			}
+		}
+	}
+	return 0;
 }
 
 void UIShader::createUIButtonBuffers() {
@@ -102,10 +139,8 @@ void UIShader::drawUIButtons() {
 	}
 }
 
-void UIShader::toggleUIButtonVisibility(const std::string& buttonName, bool visibility) {
-	if (uiButtons.find(buttonName) != uiButtons.end()) {
+void UIShader::toggleUIButtonVisibility(const UIShader::UIButton::NAME buttonName, bool visibility) {
 		uiButtons[buttonName].isVisible = visibility;
-	}
 }
 
 GLuint UIShader::init() {

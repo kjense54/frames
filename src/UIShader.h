@@ -32,20 +32,33 @@ namespace UIShader {
 	)";
 
 	struct UIButton {
-	GLuint VAO;
-	GLuint VBO;
-	std::vector<float> vertices;
-	size_t vertexCount;
-	bool isVisible;
+		enum NAME {
+			PAUSE = 1,
+			PLAY,
+			FILE,
+			INC_HOLD,
+			DEC_HOLD,
+			INC_SKIP,
+			DEC_SKIP
+		};
+		GLuint VAO;
+		GLuint VBO;
+		std::vector<float> vertices;
+		size_t vertexCount;
+		float x;
+		float y;
+		float x2;
+		float y2;
+		bool isVisible;
 
-	UIButton() : VAO(0), VBO(0), vertexCount(0), isVisible(true) {}
+		UIButton() : VAO(0), VBO(0), vertexCount(0), x(0), y(0), x2(0), y2(0), isVisible(true) {}
 	};
 	
-
 	void createUIButtons();
 	void createUIButtonBuffers();
 	void drawUIButtons();
-	void toggleUIButtonVisibility(const std::string& buttonName, bool visibility);
+	void toggleUIButtonVisibility(const UIShader::UIButton::NAME buttonName, bool visibility);
+	int checkMouseOver(double xpos, double ypos, int width, int height);
 	GLuint compileShader(GLenum type, const char* source);
 	GLuint compileProgram(GLuint vShader, GLuint fShader);
 	GLuint init();

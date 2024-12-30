@@ -6,6 +6,8 @@
 #include "FrameShader.h"
 #include "UIShader.h"
 
+const int INITIAL_WIDTH = 1920;
+const int INITIAL_HEIGHT = 1200;
 const int MAX_FRAME_SKIP = 30;
 const int FRAME_HOLD_INCREMENT = 5;
 struct {
@@ -22,11 +24,34 @@ void processInput(GLFWwindow* window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
 }
+void window_size_callback(GLFWwindow* window, int width, int height) {
+	// recalculate and set ui button xy positions
+	std::cout << "window resized to: " << width << ", " << height << std::endl;
+	glViewport(0, 0, width, height);
+}
 
+// TODO: add other UI elements
+// TODO: calculate xy pos of element in window
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	// other UI buttons to add:
+	// two numInput boxes w/ increment arrows on either side, like:
+	// < [ 15 ] > 
+	// [ videofile.mp4 ] selection box
+	// button by: getwindowwidth, getwindowheight, getbuttonx, getbuttony, convert w/ math func for pos.  
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		videoState.paused = !videoState.paused;
-		videoState.justChanged = true;
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
+		int button = UIShader::checkMouseOver(xpos, ypos, width, height);
+		switch (button) {
+			case UIShader::UIButton::NAME::FILE:
+				std::cout << "clicked on file selection button" << std::endl;
+			break;
+			default: 
+			videoState.paused = !videoState.paused;
+			videoState.justChanged = true;
+		}
 	}
 }
 
@@ -76,9 +101,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
   
-const int INITIAL_WIDTH = 1920;
-const int INITIAL_HEIGHT = 1080;
-
 //----------------------------------------------------------------------------------------------------------
 int main() {
   if (!glfwInit()) {
@@ -98,8 +120,10 @@ int main() {
     return -1;
   }
 
-  glfwSetWindowPos(window, 100, 2000);
+  glfwSetWindowPos(window, 100, 100);
   glfwMakeContextCurrent(window);
+	glfwSetWindowAspectRatio(window, 16, 10);
+	glfwSetWindowSizeCallback(window, window_size_callback);
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
@@ -170,7 +194,6 @@ int main() {
 				eoframes = frame.eof;
 			}																																									 
 		}
-
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 		// UI 
@@ -178,8 +201,8 @@ int main() {
 		if ((err = glGetError()) != GL_NO_ERROR) {
 			std::cout << "OpenGl glUseProgram(uiProgram) error: " << err << std::endl;
 		}
-		UIShader::toggleUIButtonVisibility("play", videoState.paused);
-		UIShader::toggleUIButtonVisibility("pause", !videoState.paused);
+		UIShader::toggleUIButtonVisibility(UIShader::UIButton::NAME::PLAY, videoState.paused);
+		UIShader::toggleUIButtonVisibility(UIShader::UIButton::NAME::PAUSE, !videoState.paused);
 		UIShader::drawUIButtons();
 
     glfwSwapBuffers(window);
